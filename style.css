@@ -1,0 +1,1364 @@
+:root {
+    /* Colors */
+    --bg-dark: #0f172a;
+    --bg-dark-deep: #020617;
+    --glass-bg: rgba(30, 41, 59, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-highlight: rgba(255, 255, 255, 0.05);
+    
+    --primary: #6366f1;
+    --primary-glow: rgba(99, 102, 241, 0.4);
+    --accent: #ec4899;
+    
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    
+    /* Spacing & Sizes */
+    --sidebar-width: 280px;
+    --header-height: 60px;
+    
+    /* Effects */
+    --blur-amt: 12px;
+    --radius-lg: 16px;
+    --radius-md: 8px;
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.2);
+    --shadow-glow: 0 0 15px var(--primary-glow);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at top left, #1e293b, #0f172a);
+    background-color: var(--bg-dark-deep);
+    color: var(--text-main);
+    overflow: hidden; /* App-like feel */
+    height: 100vh;
+    width: 100vw;
+}
+
+#app-container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+/* SVG Layer */
+#connection-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Let clicks pass through to canvas components */
+    z-index: 10;
+}
+
+/* Path Styles */
+.connection-path {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px var(--primary));
+    opacity: 0.8;
+    transition: d 0.1s linear;
+}
+
+.connection-path.preview {
+    stroke: var(--text-muted);
+    stroke-dasharray: 5, 5;
+    opacity: 0.5;
+}
+
+/* Sidebar */
+#sidebar {
+    width: var(--sidebar-width);
+    height: 100%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amt));
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    z-index: 20; /* Above connections */
+    user-select: none;
+}
+
+.sidebar-header {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar-header h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: linear-gradient(to right, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* Sidebar Hierarchy Items */
+.tree-item {
+    margin-bottom: 8px;
+}
+
+.tree-header {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s ease;
+    color: var(--text-muted);
+}
+
+.tree-header:hover {
+    background: var(--glass-highlight);
+    color: var(--text-main);
+}
+
+.tree-icon {
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    transition: transform 0.2s;
+}
+
+.expanded > .tree-header > .tree-icon.arrow {
+    transform: rotate(90deg);
+}
+
+.tree-children {
+    padding-left: 20px;
+    display: none;
+    animation: slideDown 0.2s ease-out;
+}
+
+.expanded > .tree-children {
+    display: block;
+}
+
+/* Draggable Items in Sidebar */
+.draggable-source {
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    cursor: grab;
+    transition: all 0.2s;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.draggable-source:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--glass-border);
+    transform: translateX(4px);
+}
+
+.draggable-source:active {
+    cursor: grabbing;
+}
+
+/* Canvas */
+#canvas {
+    flex: 1;
+    position: relative;
+    position: relative;
+    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+    overflow: auto; /* Enable scrolling */
+}
+
+#canvas-actions {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    z-index: 50;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: var(--shadow-glow);
+    transition: transform 0.1s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+/* Buckets */
+.bucket {
+    position: absolute;
+    width: 160px;
+    min-height: 280px;
+    
+    /* Container layout */
+    display: flex;
+    flex-direction: column;
+    z-index: 30;
+    transition: transform 0.2s;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+.bucket:hover {
+    transform: translateY(-2px);
+    z-index: 40; 
+}
+
+/* 1. HANDLE */
+.bucket-handle {
+    position: absolute;
+    top: 0px; 
+    left: 40px;
+    right: 40px;
+    height: 100px;
+    border: 8px solid #cbd5e1; /* Lighter silver */
+    border-bottom: none;
+    border-radius: 50px 50px 0 0;
+    z-index: 10;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.1);
+}
+
+.bucket-handle::after {
+    /* Wooden grip center */
+    content: '';
+    position: absolute;
+    top: -10px; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 20px;
+    background: linear-gradient(to bottom, #f59e0b, #d97706); /* Wood gradient */
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* 2. BUCKET BODY VISUAL CONTAINER */
+.bucket-body-visual {
+    position: absolute;
+    top: 50px; 
+    left: 0;
+    width: 100%;
+    height: 140px; 
+    z-index: 20;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3)); /* Shadow for the whole bucket shape */
+}
+
+/* 3. THE FRONT SHAPE (The main green body) */
+.bucket-front-shape {
+    position: absolute;
+    top: 0;
+    left: 10px;
+    right: 10px;
+    bottom: 0px;
+    
+    /* Gradient Green with 3D rounding effect */
+    background: linear-gradient(90deg, #4d7c0f 0%, #84cc16 20%, #a3e635 50%, #84cc16 80%, #4d7c0f 100%);
+    
+    /* Taper to make it trapezoid */
+    clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%);
+}
+
+/* 4. RIMS (To make it look open/3D) */
+.bucket-rim-back {
+    /* The back part of the circle opening - visible behind main body */
+    position: absolute;
+    top: -15px; 
+    left: 10px; /* Match clip-path top width essentially */
+    right: 10px;
+    height: 30px;
+    background: #365314; /* Dark green interior */
+    border-radius: 50%;
+    z-index: 1; 
+}
+
+.bucket-rim-front {
+    /* The front lip */
+    position: absolute;
+    top: -15px; 
+    left: 10px; 
+    right: 10px;
+    height: 30px;
+    
+    border: 4px solid #bef264; /* Highlight rim */
+    border-top: none; /* Hide top part to look like it wraps */
+    border-radius: 50%; 
+    z-index: 25; /* Above body */
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* 5. FOREGROUND CONTENT */
+.bucket-foreground {
+    position: relative;
+    z-index: 30; 
+    margin-top: 70px; /* Push down into the bucket body */
+    padding: 0 45px; /* Keep inside tapered visual */
+    padding-bottom: 20px;
+    
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Header style adjustments */
+.bucket-header {
+    position: relative;
+    width: 100%;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+}
+
+.bucket-header h3 {
+    text-align: center;
+    color: white;
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-family: sans-serif;
+    letter-spacing: 0.5px;
+}
+
+/* 6. DELETE BUTTON (REMOVED) - Keeping class for safety or future use if needed, but hiding */
+.delete-bucket-btn {
+    display: none;
+}
+
+/* Trash Zone */
+#trash-zone {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px); /* Start hidden below */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 32px;
+    background: rgba(220, 38, 38, 0.8); /* Red */
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 30px rgba(220, 38, 38, 0.4);
+}
+
+#trash-zone.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#trash-zone.drag-over {
+    transform: translateX(-50%) scale(1.1);
+    background: rgba(220, 38, 38, 1);
+    box-shadow: 0 0 50px rgba(220, 38, 38, 0.6);
+}
+
+.trash-icon {
+    font-size: 32px;
+}
+
+.bucket-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Clean up old pseudo-element styles */
+.bucket::before {
+    display: none;
+}
+
+/* Items inside Buckets */
+.bucket-item {
+    background: rgba(0, 0, 0, 0.5); /* darker for contrast on green */
+    border-radius: var(--radius-md);
+    margin-bottom: 5px;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.bucket-item-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Variables & Connectors */
+.variable-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.variable {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: crosshair;
+    transition: background 0.2s;
+    position: relative; /* Anchor for connector dot */
+}
+
+.variable:hover {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--text-main);
+}
+
+.connector-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.variable:hover .connector-dot {
+    background: var(--primary);
+    transform: scale(1.2);
+    box-shadow: 0 0 8px var(--primary);
+}
+
+.variable.right .connector-dot {
+    /* For output variables if we had directionality,
+       but for now we'll put dots on the right for all */
+    order: 2;
+}
+
+/* Animations */
+.delete-item-btn {
+    margin-left: auto;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.bucket-item:hover .delete-item-btn {
+    opacity: 1;
+}
+
+.delete-item-btn:hover {
+    color: var(--accent);
+}
+
+.item-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.settings-btn {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.settings-btn:hover {
+    opacity: 1;
+    color: var(--primary);
+}
+
+.item-settings {
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.item-settings.hidden {
+    display: none;
+}
+
+.control-group {
+    margin-bottom: 8px;
+}
+
+.control-group label {
+    display: block;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.control-group input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    padding: 6px;
+    border-radius: 4px;
+    color: var(--text-main);
+    outline: none;
+}
+
+.control-group input:focus {
+    border-color: var(--primary);
+}
+
+.connection-path.selected {
+    stroke: var(--accent);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 6px var(--accent));
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.bucket {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Detail Overlay */
+#bucket-detail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(18, 18, 18, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    color: var(--text-primary);
+    padding: 60px 100px;
+    box-sizing: border-box;
+}
+
+#bucket-detail-overlay.hidden {
+    display: none;
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 20px;
+}
+
+.detail-header h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative; /* For Trash Zone positioning */
+}
+
+/* Detail Overlay - Premium UI */
+#detail-cards-container {
+    position: relative;
+    width: 100%;
+    height: 100%; 
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0%, transparent 70%); 
+    border-radius: 12px;
+    overflow: hidden; 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#detail-connection-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 15; /* Above cards (10), but below active drag (100) */
+    pointer-events: none;
+    overflow: visible;
+}
+
+/* Card Design */
+.detail-card {
+    position: absolute; 
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    overflow: hidden;
+    color: #1e293b;
+    width: 320px; 
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.detail-card:active {
+    cursor: grabbing;
+    transform: scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 100 !important;
+}
+
+.detail-card-header {
+    background: linear-gradient(to right, #f8fafc, #f1f5f9);
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 16px;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-card-header .type-tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+}
+
+.detail-card-body {
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+/* Variable Rows */
+.card-variable-row {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: relative; 
+    transition: background 0.15s;
+    color: #334155;
+    user-select: none; 
+}
+
+.card-variable-row:last-child {
+    border-bottom: none;
+}
+
+.card-variable-row:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+/* Connector Dot */
+.card-connector {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background: #fff;
+    cursor: crosshair;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 20;
+    position: relative;
+}
+
+/* Add a larger hit area visual or just clearer hover */
+.card-connector::after {
+    content: '';
+    position: absolute;
+    top: -4px; left: -4px;
+    right: -4px; bottom: -4px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.card-connector:hover {
+    border-color: #6366f1; /* Indigo */
+    background: #6366f1;
+    transform: scale(1.2);
+}
+
+.card-connector:hover::after {
+    opacity: 1;
+}
+
+.card-connector.connected {
+    background: #6366f1;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.card-variable-row.connected span {
+    font-weight: 500;
+    color: #6366f1;
+}
+
+/* Connection Lines */
+.detail-connection-path {
+    fill: none;
+    stroke: #94a3b8; /* Slate 400 */
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: stroke; 
+    cursor: pointer;
+    transition: stroke-width 0.2s;
+}
+
+.detail-connection-path:hover {
+    stroke: #6366f1;
+    stroke-width: 4;
+    filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.3));
+}
+
+.detail-connection-path.preview {
+    stroke: #cbd5e1;
+    stroke-dasharray: 6, 4;
+    opacity: 0.8;
+}
+
+/* Detail Footer */
+.detail-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 30px;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+}
+
+.circle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.2s;
+}
+
+.circle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+#undo-btn:disabled, #redo-btn:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Simulation Bead */
+.simulation-bead {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #fff, 0 0 20px var(--primary), 0 0 40px var(--accent);
+    pointer-events: none;
+    z-index: 1000;
+    offset-path: path('M0,0 L0,0'); /* Default */
+    offset-rotate: auto;
+    opacity: 0;
+    will-change: offset-distance, opacity, transform;
+}
+
+@keyframes travel {
+    0% {
+        offset-distance: 0%;
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    10% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+    90% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+    100% {
+        offset-distance: 100%;
+        opacity: 0;
+        transform: scale(0.5);
+    }
+}
+
+/* Minimap */
+#minimap {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    width: 200px;
+    height: 150px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    z-index: 90; /* Above buckets */
+    overflow: hidden;
+    pointer-events: none; /* Pass clicks through? Or maybe allow click to jump? For now pass */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: opacity 0.3s;
+}
+
+.minimap-node {
+    position: absolute;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.minimap-viewport {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.05);
+    z-index: 10;
+}
+
+/* Context Menu */
+#context-menu {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(30, 41, 59, 0.9);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    padding: 6px;
+    min-width: 180px;
+    transform-origin: top left;
+    animation: menuPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#context-menu.hidden {
+    display: none;
+}
+
+.context-item {
+    padding: 8px 12px;
+    margin-bottom: 2px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.1s;
+}
+
+.context-item:hover {
+    background: rgba(99, 102, 241, 0.8); /* Primary */
+    color: white;
+}
+
+.context-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    margin: 4px 0;
+}
+
+/* Color Picker Grid */
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 8px;
+    width: 160px;
+}
+
+.color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: transform 0.1s;
+}
+
+.color-swatch:hover {
+    transform: scale(1.2);
+    border-color: #fff;
+}
+
+@keyframes menuPop {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+
+
+/* --- Modern Back Button --- */
+.modern-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.modern-back-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.modern-back-btn .icon {
+    font-size: 12px;
+}
+
+/* --- Run Flow Button (High Visibility) --- */
+.btn-glow-anim {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); /* Bright Rose/Red */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+    transition: all 0.2s;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-glow-anim:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 25px rgba(244, 63, 94, 0.6);
+    filter: brightness(1.1);
+}
+
+.btn-glow-anim:active {
+    transform: translateY(1px);
+}
+
+/* --- Export Dropdown UI --- */
+.btn-glass-large {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 110px;
+    justify-content: space-between;
+}
+
+.btn-glass-large:hover {
+    background: rgba(51, 65, 85, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.export-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 160px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 1000;
+    animation: fadeIn 0.1s ease-out;
+}
+
+/* CSS SPECIFICITY FIX */
+.export-dropdown.hidden {
+    display: none !important;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: background 0.1s;
+}
+
+.export-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.export-option .ext {
+    font-family: monospace;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--accent-cyan);
+}
+
+/* --- Custom Template Creator UI --- */
+
+/* Sidebar Actions */
+.btn-full-width-glass {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-full-width-glass:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border-color: rgba(255,255,255,0.2);
+}
+
+/* Dropdown */
+.dropdown-menu {
+    position: absolute;
+    background: rgba(20, 20, 25, 0.95);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    z-index: 1000;
+    margin-top: 5px;
+    overflow: hidden;
+    animation: fadeIn 0.1s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-menu.hidden {
+    display: none !important;
+}
+
+.dropdown-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+.dropdown-item:last-child { border-bottom: none; }
+
+.dropdown-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: white;
+}
+
+.dropdown-item .icon {
+    width: 8px; height: 8px; border-radius: 50%;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-overlay.hidden {
+    display: none !important;
+}
+
+.modal-glass {
+    width: 420px;
+    background: linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(20, 20, 25, 0.98));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 18px;
+    color: white;
+}
+
+.btn-icon-plain {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+
+.btn-icon-plain:hover { color: white; }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.form-group input {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    color: white;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: var(--primary);
+    background: rgba(0,0,0,0.4);
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.section-header label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.btn-text-accent {
+    background: none;
+    border: none;
+    color: var(--accent-cyan);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.btn-text-accent:hover { background: rgba(34, 211, 238, 0.1); }
+
+/* Variable Row */
+.variable-form-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.variable-form-row input {
+    flex: 2;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    color: white;
+    font-size: 13px;
+    outline: none;
+}
+.variable-form-row input:focus { border-color: var(--primary); }
+
+.variable-form-row select {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+.btn-row-delete {
+    background: none;
+    border: none;
+    color: #ef4444; 
+    cursor: pointer;
+    padding: 6px;
+    font-size: 18px;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+}
+
+.btn-row-delete:hover { opacity: 1; background: rgba(239, 68, 68, 0.1); border-radius: 4px; }
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-secondary:hover { background: rgba(255,255,255,0.05); color: white; }
+
+@keyframes slideUp {
+    from { transform: translateY(20px) scale(0.98); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}

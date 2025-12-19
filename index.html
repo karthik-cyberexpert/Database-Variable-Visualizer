@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app-container">
+        <!-- SVG Layer for connections -->
+        <svg id="connection-layer"></svg>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="glass-panel">
+            <div class="sidebar-header">
+                <h2>Workflow Editor</h2>
+            </div>
+            
+            <!-- Custom Item Actions (Below Header) -->
+            <div class="sidebar-actions-bar" style="padding: 0 20px 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px;">
+                <button id="add-item-btn" class="btn-full-width-glass">
+                    <span>+ Add Custom Template</span>
+                </button>
+                <!-- Add Item Dropdown -->
+                <div id="add-item-dropdown" class="dropdown-menu hidden" style="left: 20px; top: 115px; width: 260px;">
+                    <div class="dropdown-item" data-type="app">
+                        <span class="icon" style="background:var(--accent-purple)"></span> Web App
+                    </div>
+                    <div class="dropdown-item" data-type="hub">
+                        <span class="icon" style="background:var(--accent-cyan)"></span> Hub
+                    </div>
+                </div>
+            </div>
+            <div id="template-list" class="sidebar-content">
+                <!-- TEMPLATES ROOT -->
+                <div class="tree-item expanded">
+                    <div class="tree-header" data-toggle="folder">
+                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                        <span>Templates</span>
+                    </div>
+                    <div class="tree-children">
+                        
+                        <!-- WEB APPS FOLDER -->
+                        <div class="tree-item expanded">
+                            <div class="tree-header" data-toggle="folder">
+                                <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                <span>Web Apps</span>
+                            </div>
+                            <div class="tree-children">
+                                
+                                <!-- SHOPIFY -->
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"app-shopify","label":"Shopify","nodeType":"app","variables":[{"id":"v-shop-new-order","label":"New Order","type":"trigger"},{"id":"v-shop-cust-update","label":"Customer Updated","type":"trigger"},{"id":"v-shop-prod-id","label":"Product ID","type":"data"},{"id":"v-shop-total","label":"Order Total","type":"data"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>Shopify</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-shop-new-order-item","label":"Shopify","nodeType":"app","variables":[{"id":"v-shop-new-order","label":"New Order","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>New Order</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-shop-cust-update-item","label":"Shopify","nodeType":"app","variables":[{"id":"v-shop-cust-update","label":"Customer Updated","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>Customer Updated</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-shop-prod-id-item","label":"Shopify","nodeType":"app","variables":[{"id":"v-shop-prod-id","label":"Product ID","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Product ID</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-shop-total-item","label":"Shopify","nodeType":"app","variables":[{"id":"v-shop-total","label":"Order Total","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Order Total</span></div></div>
+                                    </div>
+                                </div>
+
+                                <!-- STRIPE -->
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"app-stripe","label":"Stripe","nodeType":"app","variables":[{"id":"v-stripe-pay-success","label":"Payment Success","type":"trigger"},{"id":"v-stripe-pay-fail","label":"Payment Failed","type":"trigger"},{"id":"v-stripe-cust-id","label":"Customer ID","type":"data"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>Stripe</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-stripe-pay-success-item","label":"Stripe","nodeType":"app","variables":[{"id":"v-stripe-pay-success","label":"Payment Success","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>Payment Success</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-stripe-pay-fail-item","label":"Stripe","nodeType":"app","variables":[{"id":"v-stripe-pay-fail","label":"Payment Failed","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>Payment Failed</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-stripe-cust-id-item","label":"Stripe","nodeType":"app","variables":[{"id":"v-stripe-cust-id","label":"Customer ID","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Customer ID</span></div></div>
+                                    </div>
+                                </div>
+
+                                <!-- TWITTER -->
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"app-social","label":"X (Twitter)","nodeType":"app","variables":[{"id":"v-tw-tweet","label":"New Mention","type":"trigger"},{"id":"v-tw-text","label":"Tweet Text","type":"data"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>X (Twitter)</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-tw-tweet-item","label":"X (Twitter)","nodeType":"app","variables":[{"id":"v-tw-tweet","label":"New Mention","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>New Mention</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-tw-text-item","label":"X (Twitter)","nodeType":"app","variables":[{"id":"v-tw-text","label":"Tweet Text","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Tweet Text</span></div></div>
+                                    </div>
+                                </div>
+
+                                <!-- GITHUB -->
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"app-github","label":"GitHub","nodeType":"app","variables":[{"id":"v-gh-push","label":"Commit Push","type":"trigger"},{"id":"v-gh-pr","label":"New PR","type":"trigger"},{"id":"v-gh-repo","label":"Repository","type":"data"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>GitHub</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-gh-push-item","label":"GitHub","nodeType":"app","variables":[{"id":"v-gh-push","label":"Commit Push","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>Commit Push</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-gh-pr-item","label":"GitHub","nodeType":"app","variables":[{"id":"v-gh-pr","label":"New PR","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>New PR</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-gh-repo-item","label":"GitHub","nodeType":"app","variables":[{"id":"v-gh-repo","label":"Repository","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Repository</span></div></div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- HUBS FOLDER -->
+                        <div class="tree-item expanded">
+                            <div class="tree-header" data-toggle="folder">
+                                <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                <span>Hubs</span>
+                            </div>
+                            <div class="tree-children">
+                                
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"hub-webhook","label":"Webhook","nodeType":"hub","variables":[{"id":"v-wh-payload","label":"Payload","type":"data"},{"id":"v-wh-headers","label":"Headers","type":"data"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>Webhook</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-wh-payload-item","label":"Webhook","nodeType":"hub","variables":[{"id":"v-wh-payload","label":"Payload","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Payload</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-wh-headers-item","label":"Webhook","nodeType":"hub","variables":[{"id":"v-wh-headers","label":"Headers","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Headers</span></div></div>
+                                    </div>
+                                </div>
+
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"hub-scheduler","label":"Scheduler","nodeType":"hub","variables":[{"id":"v-sch-time","label":"Time Trigger","type":"trigger"},{"id":"v-sch-date","label":"Current Date","type":"data"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>Scheduler</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-sch-time-item","label":"Scheduler","nodeType":"hub","variables":[{"id":"v-sch-time","label":"Time Trigger","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>Time Trigger</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-sch-date-item","label":"Scheduler","nodeType":"hub","variables":[{"id":"v-sch-date","label":"Current Date","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Current Date</span></div></div>
+                                    </div>
+                                </div>
+
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"hub-condition","label":"If/Else","nodeType":"hub","variables":[{"id":"v-cond-true","label":"True","type":"trigger"},{"id":"v-cond-false","label":"False","type":"trigger"},{"id":"v-cond-input","label":"Input Value","type":"data"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>If/Else</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-cond-true-item","label":"If/Else","nodeType":"hub","variables":[{"id":"v-cond-true","label":"True","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>True</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-cond-false-item","label":"If/Else","nodeType":"hub","variables":[{"id":"v-cond-false","label":"False","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>False</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-cond-input-item","label":"If/Else","nodeType":"hub","variables":[{"id":"v-cond-input","label":"Input Value","type":"data"}]}'><span class="tree-icon dot" style="background:var(--accent-purple)"></span><span>Input Value</span></div></div>
+                                    </div>
+                                </div>
+
+                                <div class="tree-item">
+                                    <div class="tree-header" data-toggle="folder" draggable="true" data-drag-json='{"type":"sidebar-item","id":"hub-delay","label":"Delay","nodeType":"hub","variables":[{"id":"v-delay-in","label":"Start","type":"trigger"},{"id":"v-delay-out","label":"End","type":"trigger"}]}'>
+                                        <span class="tree-icon arrow"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                                        <span>Delay</span>
+                                    </div>
+                                    <div class="tree-children">
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-delay-in-item","label":"Delay","nodeType":"hub","variables":[{"id":"v-delay-in","label":"Start","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>Start</span></div></div>
+                                        <div class="tree-item"><div class="tree-header" draggable="true" data-drag-json='{"type":"sidebar-item","id":"v-delay-out-item","label":"Delay","nodeType":"hub","variables":[{"id":"v-delay-out","label":"End","type":"trigger"}]}'><span class="tree-icon dot" style="background:var(--accent-cyan)"></span><span>End</span></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Canvas -->
+        <main id="canvas">
+            <div id="canvas-actions">
+                <button id="global-export-btn" class="btn-primary" style="margin-right: 10px;">
+                    Export
+                </button>
+                <button id="create-bucket-btn" class="btn-primary">
+                    <span class="icon">+</span> Create Bucket
+                </button>
+            </div>
+            <div id="buckets-container">
+                <!-- Buckets will be dropped/rendered here -->
+            </div>
+            
+            <!-- Bucket Detail Overlay -->
+            <div id="bucket-detail-overlay" class="hidden">
+                <div class="detail-header">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <button id="close-detail-btn" class="modern-back-btn">
+                            <span class="icon">❮</span> Back
+                        </button>
+                        <h2 id="detail-bucket-label">Bucket Name</h2>
+                    </div>
+                    
+                    <!-- Top Controls -->
+                    <div id="detail-header-controls" style="display:flex; align-items:center; gap:12px; margin-left:auto;">
+                        
+                        <!-- Run Flow -->
+                        <button id="detail-run-btn" class="btn-glow-anim">
+                            <span class="icon">▶</span> Run Flow
+                        </button>
+
+                        <!-- Export Dropdown -->
+                        <div class="export-wrapper" style="position:relative;">
+                            <button id="export-trigger-btn" class="btn-glass-large">
+                                <span>Export</span>
+                                <span class="arrow">▼</span>
+                            </button>
+                            <!-- Hidden Panel -->
+                            <div id="export-panel" class="export-dropdown hidden">
+                                <div class="export-option" data-format="json">
+                                    <span class="ext">{}</span> 
+                                    <span>JSON</span>
+                                </div>
+                                <div class="export-option" data-format="csv">
+                                    <span class="ext">📄</span> 
+                                    <span>CSV</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                
+                <div class="detail-content">
+                    <div id="detail-cards-container">
+                        <!-- Cards will be injected here -->
+                    </div>
+                </div>
+                
+                <div class="detail-footer">
+                    <!-- Left: Undo/Redo -->
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button class="btn-icon circle-btn" id="undo-btn" title="Undo">↩</button>
+                        <button class="btn-icon circle-btn" id="redo-btn" title="Redo">↪</button>
+                    </div>
+                    
+                    <!-- Center/Right: Zoom Slider -->
+                    <div class="zoom-controls">
+                        <span style="font-size:12px; color:rgba(255,255,255,0.6);">Zoom</span>
+                        <input type="range" id="zoom-slider" min="0.2" max="3" step="0.1" value="1">
+                    </div>
+                </div>
+            </div>
+            <!-- Minimap -->
+            <div id="minimap">
+                <div id="minimap-viewport"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu" class="hidden">
+        <!-- Content injected dynamically -->
+    </div>
+
+    <!-- Create Custom Item Modal -->
+    <div id="create-item-modal" class="modal-overlay hidden">
+        <div class="modal-glass">
+            <div class="modal-header">
+                <h3 id="modal-title">Create New Web App</h3>
+                <button id="close-modal-btn" class="btn-icon-plain">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="custom-item-name" placeholder="E.g., My Custom App">
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-header">
+                        <label>Variables</label>
+                        <button id="add-variable-btn" class="btn-text-accent">+ Add Variable</button>
+                    </div>
+                    <div id="variable-rows-container">
+                        <!-- Rows injected here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-create-btn" class="btn-secondary">Cancel</button>
+                <button id="confirm-create-btn" class="btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
